@@ -17,6 +17,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    flavorDimensions "default"
+
+    // If you need to add more flavors, consider using flavor dimensions.
+    // 这里得设置,不然不认识 Injection.java, 相当于pro中的东西添加到主module中
+    // 如果主module存在，则覆盖
+    productFlavors {
+        prod {
+            dimension "default"
+        }
+    }
 }
 
 dependencies {
