@@ -32,7 +32,7 @@ dependencies {
     compile "com.android.support.test.espresso:espresso-idling-resource:$rootProject.espressoVersion"
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     testCompile 'junit:junit:4.12'
-    // db
+    // android persistence db
     compile "android.arch.persistence.room:runtime:$rootProject.roomVersion"
     annotationProcessor "android.arch.persistence.room:compiler:$rootProject.roomVersion"
 
