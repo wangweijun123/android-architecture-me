@@ -54,6 +54,7 @@ public class TasksRepositoryTest {
 
     private TasksRepository mTasksRepository;
 
+    // android test 测试某一个类, 这个类它是有依赖的，你要mock这些依赖对象,利用第三方测试工具
     @Mock
     private TasksDataSource mTasksRemoteDataSource;
 
@@ -346,8 +347,9 @@ public class TasksRepositoryTest {
      */
     private void twoTasksLoadCallsToRepository(TasksDataSource.LoadTasksCallback callback) {
         // When tasks are requested from repository
+        System.out.println("First call to API");
         mTasksRepository.getTasks(callback); // First call to API
-
+        System.out.println("First finished");
         // Use the Mockito Captor to capture the callback
         verify(mTasksLocalDataSource).getTasks(mTasksCallbackCaptor.capture());
 
@@ -360,8 +362,9 @@ public class TasksRepositoryTest {
 
         // Trigger callback so tasks are cached
         mTasksCallbackCaptor.getValue().onTasksLoaded(TASKS);
-
+        System.out.println("Second call to API");
         mTasksRepository.getTasks(callback); // Second call to API
+        System.out.println("Second finished");
     }
 
     private void setTasksNotAvailable(TasksDataSource dataSource) {

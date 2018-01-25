@@ -23,6 +23,7 @@ import android.support.test.espresso.IdlingResource;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 
 import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
@@ -33,6 +34,7 @@ import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingRe
  * Displays an add or edit task screen.
  */
 public class AddEditTaskActivity extends AppCompatActivity {
+    public static final String TAG = "mvp";
 
     public static final int REQUEST_ADD_TASK = 1;
 
@@ -62,6 +64,7 @@ public class AddEditTaskActivity extends AppCompatActivity {
         setToolbarTitle(taskId);
 
         if (addEditTaskFragment == null) {
+            Log.i(TAG, "AddEditTaskFragment  newInstance");
             addEditTaskFragment = AddEditTaskFragment.newInstance();
 
             if (getIntent().hasExtra(AddEditTaskFragment.ARGUMENT_EDIT_TASK_ID)) {
@@ -82,7 +85,8 @@ public class AddEditTaskActivity extends AppCompatActivity {
             shouldLoadDataFromRepo = savedInstanceState.getBoolean(SHOULD_LOAD_DATA_FROM_REPO_KEY);
         }
 
-        // Create the presenter
+        // Create the presenter(view 和 model, 同时给view设置了presenter)
+        Log.i(TAG, "AddEditTaskPresenter  newInstance");
         mAddEditTaskPresenter = new AddEditTaskPresenter(
                 taskId,
                 Injection.provideTasksRepository(getApplicationContext()),

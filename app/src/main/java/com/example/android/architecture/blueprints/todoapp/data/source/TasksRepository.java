@@ -16,8 +16,6 @@
 
 package com.example.android.architecture.blueprints.todoapp.data.source;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -28,6 +26,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Concrete implementation to load tasks from the data sources into a cache.
@@ -80,6 +80,7 @@ public class TasksRepository implements TasksDataSource {
     /**
      * Used to force {@link #getInstance(TasksDataSource, TasksDataSource)} to create a new instance
      * next time it's called.
+     * 如何回收一个对象
      */
     public static void destroyInstance() {
         INSTANCE = null;
@@ -96,20 +97,25 @@ public class TasksRepository implements TasksDataSource {
     public void getTasks(@NonNull final LoadTasksCallback callback) {
         checkNotNull(callback);
 
+        System.out.println("mCachedTasks:"+mCachedTasks+", mCacheIsDirty:"+mCacheIsDirty);
         // Respond immediately with cache if available and not dirty
         if (mCachedTasks != null && !mCacheIsDirty) {
+            System.out.println("有缓存立马返回");
             callback.onTasksLoaded(new ArrayList<>(mCachedTasks.values()));
             return;
         }
 
         if (mCacheIsDirty) {
+            System.out.println("缓存不可用，需要重新从网络拉出数据");
             // If the cache is dirty we need to fetch new data from the network.
             getTasksFromRemoteDataSource(callback);
         } else {
+            System.out.println("查询数据库..");
             // Query the local storage if available. If not, query the network.
             mTasksLocalDataSource.getTasks(new LoadTasksCallback() {
                 @Override
                 public void onTasksLoaded(List<Task> tasks) {
+                    System.out.println("查询数据库完毕");
                     refreshCache(tasks);
                     callback.onTasksLoaded(new ArrayList<>(mCachedTasks.values()));
                 }
@@ -279,8 +285,12 @@ public class TasksRepository implements TasksDataSource {
         mTasksRemoteDataSource.getTasks(new LoadTasksCallback() {
             @Override
             public void onTasksLoaded(List<Task> tasks) {
+                System.out.println("从网络拉出数据完毕");
+                System.out.println("刷新内存");
                 refreshCache(tasks);
+                System.out.println("刷新本地数据库");
                 refreshLocalDataSource(tasks);
+                System.out.println("回掉..");
                 callback.onTasksLoaded(new ArrayList<>(mCachedTasks.values()));
             }
 

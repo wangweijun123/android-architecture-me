@@ -18,6 +18,7 @@ package com.example.android.architecture.blueprints.todoapp.addedittask;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
@@ -31,9 +32,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
         TasksDataSource.GetTaskCallback {
 
+    // model 层的实例(都是通过接口引用)
     @NonNull
     private final TasksDataSource mTasksRepository;
-
+    // view 层的实例(都是通过接口引用)
     @NonNull
     private final AddEditTaskContract.View mAddTaskView;
 
@@ -56,12 +58,14 @@ public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
         mTasksRepository = checkNotNull(tasksRepository);
         mAddTaskView = checkNotNull(addTaskView);
         mIsDataMissing = shouldLoadDataFromRepo;
-
+        // 初始化presenter的时候,同时
+        Log.i(AddEditTaskActivity.TAG, "初始化presenter的时候,同时设置view的presenter");
         mAddTaskView.setPresenter(this);
     }
 
     @Override
     public void start() {
+        Log.i(AddEditTaskActivity.TAG, "presenter start...");
         if (!isNewTask() && mIsDataMissing) {
             populateTask();
         }
@@ -86,6 +90,7 @@ public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
 
     @Override
     public void onTaskLoaded(Task task) {
+        Log.i(AddEditTaskActivity.TAG, "onTaskLoaded");
         // The view may not be able to handle UI updates anymore
         if (mAddTaskView.isActive()) {
             mAddTaskView.setTitle(task.getTitle());
@@ -96,6 +101,7 @@ public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
 
     @Override
     public void onDataNotAvailable() {
+        Log.i(AddEditTaskActivity.TAG, "onDataNotAvailable");
         // The view may not be able to handle UI updates anymore
         if (mAddTaskView.isActive()) {
             mAddTaskView.showEmptyTaskError();

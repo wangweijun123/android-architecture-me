@@ -46,10 +46,23 @@ public interface TasksDataSource {
         void onDataNotAvailable();
     }
 
+    /**
+     * 获取任务列表
+     * @param callback
+     */
     void getTasks(@NonNull LoadTasksCallback callback);
 
+    /**
+     * 获取任务详情
+     * @param taskId
+     * @param callback
+     */
     void getTask(@NonNull String taskId, @NonNull GetTaskCallback callback);
 
+    /**
+     * 保存任务
+     * @param task
+     */
     void saveTask(@NonNull Task task);
 
     void completeTask(@NonNull Task task);

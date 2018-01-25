@@ -23,6 +23,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,6 +40,8 @@ public class AddEditTaskFragment extends Fragment implements AddEditTaskContract
 
     public static final String ARGUMENT_EDIT_TASK_ID = "EDIT_TASK_ID";
 
+    // view 层拥有presenter引用,所以在view的业务逻辑的操作
+    // 都是调用presenter的相对应的操作
     private AddEditTaskContract.Presenter mPresenter;
 
     private TextView mTitle;
@@ -56,11 +59,13 @@ public class AddEditTaskFragment extends Fragment implements AddEditTaskContract
     @Override
     public void onResume() {
         super.onResume();
+        Log.i(AddEditTaskActivity.TAG, "fragment onResume call mPresenter.start()");
         mPresenter.start();
     }
 
     @Override
     public void setPresenter(@NonNull AddEditTaskContract.Presenter presenter) {
+        Log.i(AddEditTaskActivity.TAG, "fragment setPresenter");
         mPresenter = checkNotNull(presenter);
     }
 
