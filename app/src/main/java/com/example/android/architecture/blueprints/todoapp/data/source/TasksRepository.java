@@ -20,12 +20,16 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
+import com.example.android.architecture.blueprints.todoapp.di.AppComponent;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -35,10 +39,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * For simplicity, this implements a dumb synchronisation between locally persisted data and data
  * obtained from the server, by using the remote data source only if the local database doesn't
  * exist or is empty.
+ * <p />
+ * By marking the constructor with {@code @Inject} and the class with {@code @Singleton}, Dagger
+ * injects the dependencies required to create an instance of the TasksRespository (if it fails, it
+ * emits a compiler error). It uses {@link TasksRepositoryModule} to do so, and the constructed
+ * instance is available in {@link AppComponent}.
+ * <p />
+ * Dagger generated code doesn't require public access to the constructor or class, and
+ * therefore, to ensure the developer doesn't instantiate the class manually and bypasses Dagger,
+ * it's good practice minimise the visibility of the class/constructor as much as possible.
  */
+@Singleton
 public class TasksRepository implements TasksDataSource {
-
-    private static TasksRepository INSTANCE = null;
 
     private final TasksDataSource mTasksRemoteDataSource;
 
@@ -55,35 +67,23 @@ public class TasksRepository implements TasksDataSource {
      */
     boolean mCacheIsDirty = false;
 
-    // Prevent direct instantiation.
-    private TasksRepository(@NonNull TasksDataSource tasksRemoteDataSource,
-                            @NonNull TasksDataSource tasksLocalDataSource) {
-        mTasksRemoteDataSource = checkNotNull(tasksRemoteDataSource);
-        mTasksLocalDataSource = checkNotNull(tasksLocalDataSource);
-    }
-
     /**
-     * Returns the single instance of this class, creating it if necessary.
-     *
-     * @param tasksRemoteDataSource the backend data source
-     * @param tasksLocalDataSource  the device storage data source
-     * @return the {@link TasksRepository} instance
+     * By marking the constructor with {@code @Inject}, Dagger will try to inject the dependencies
+     * required to create an instance of the TasksRepository. Because {@link TasksDataSource} is an
+     * interface, we must provide to Dagger a way to build those arguments, this is done in
+     * {@link TasksRepositoryModule}.
+     * <P>
+     * When two arguments or more have the same type, we must provide to Dagger a way to
+     * differentiate them. This is done using a qualifier.
+     * <p>
+     * Dagger strictly enforces that arguments not marked with {@code @Nullable} are not injected
+     * with {@code @Nullable} values.
      */
-    public static TasksRepository getInstance(TasksDataSource tasksRemoteDataSource,
-                                              TasksDataSource tasksLocalDataSource) {
-        if (INSTANCE == null) {
-            INSTANCE = new TasksRepository(tasksRemoteDataSource, tasksLocalDataSource);
-        }
-        return INSTANCE;
-    }
-
-    /**
-     * Used to force {@link #getInstance(TasksDataSource, TasksDataSource)} to create a new instance
-     * next time it's called.
-     * 如何回收一个对象
-     */
-    public static void destroyInstance() {
-        INSTANCE = null;
+    @Inject
+    TasksRepository(@Remote TasksDataSource tasksRemoteDataSource,
+            @Local TasksDataSource tasksLocalDataSource) {
+        mTasksRemoteDataSource = tasksRemoteDataSource;
+        mTasksLocalDataSource = tasksLocalDataSource;
     }
 
     /**
@@ -97,25 +97,20 @@ public class TasksRepository implements TasksDataSource {
     public void getTasks(@NonNull final LoadTasksCallback callback) {
         checkNotNull(callback);
 
-        System.out.println("mCachedTasks:"+mCachedTasks+", mCacheIsDirty:"+mCacheIsDirty);
         // Respond immediately with cache if available and not dirty
         if (mCachedTasks != null && !mCacheIsDirty) {
-            System.out.println("有缓存立马返回");
             callback.onTasksLoaded(new ArrayList<>(mCachedTasks.values()));
             return;
         }
 
         if (mCacheIsDirty) {
-            System.out.println("缓存不可用，需要重新从网络拉出数据");
             // If the cache is dirty we need to fetch new data from the network.
             getTasksFromRemoteDataSource(callback);
         } else {
-            System.out.println("查询数据库..");
             // Query the local storage if available. If not, query the network.
             mTasksLocalDataSource.getTasks(new LoadTasksCallback() {
                 @Override
                 public void onTasksLoaded(List<Task> tasks) {
-                    System.out.println("查询数据库完毕");
                     refreshCache(tasks);
                     callback.onTasksLoaded(new ArrayList<>(mCachedTasks.values()));
                 }
@@ -285,12 +280,8 @@ public class TasksRepository implements TasksDataSource {
         mTasksRemoteDataSource.getTasks(new LoadTasksCallback() {
             @Override
             public void onTasksLoaded(List<Task> tasks) {
-                System.out.println("从网络拉出数据完毕");
-                System.out.println("刷新内存");
                 refreshCache(tasks);
-                System.out.println("刷新本地数据库");
                 refreshLocalDataSource(tasks);
-                System.out.println("回掉..");
                 callback.onTasksLoaded(new ArrayList<>(mCachedTasks.values()));
             }
 

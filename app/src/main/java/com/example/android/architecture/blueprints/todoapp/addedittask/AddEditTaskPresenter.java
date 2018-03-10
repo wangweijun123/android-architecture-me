@@ -18,57 +18,63 @@ package com.example.android.architecture.blueprints.todoapp.addedittask;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
+import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.inject.Inject;
+
+import dagger.Lazy;
 
 /**
- * Listens to user actions from the UI ({@link AddEditTaskFragment}), retrieves the data and updates
+ * Listens to user actions from the UI ({@link AddEditTaskFragment}), retrieves the data and
+ * updates
  * the UI as required.
+ * <p/>
+ * By marking the constructor with {@code @Inject}, Dagger injects the dependencies required to
+ * create an instance of the AddEditTaskPresenter (if it fails, it emits a compiler error). It uses
+ * {@link AddEditTaskModule} to do so.
+ * <p/>
+ * Dagger generated code doesn't require public access to the constructor or class, and
+ * therefore, to ensure the developer doesn't instantiate the class manually bypassing Dagger,
+ * it's good practice minimise the visibility of the class/constructor as much as possible.
  */
-public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
+final class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
         TasksDataSource.GetTaskCallback {
 
-    // model 层的实例(都是通过接口引用)
     @NonNull
     private final TasksDataSource mTasksRepository;
-    // view 层的实例(都是通过接口引用)
-    @NonNull
-    private final AddEditTaskContract.View mAddTaskView;
+
+    @Nullable
+    private AddEditTaskContract.View mAddTaskView;
 
     @Nullable
     private String mTaskId;
 
+    // This is provided lazily because its value is determined in the Activity's onCreate. By
+    // calling it in takeView(), the value is guaranteed to be set.
+    private Lazy<Boolean> mIsDataMissingLazy;
+
+    // Whether the data has been loaded with this presenter (or comes from a system restore)
     private boolean mIsDataMissing;
 
     /**
-     * Creates a presenter for the add/edit view.
+     * Dagger strictly enforces that arguments not marked with {@code @Nullable} are not injected
+     * with {@code @Nullable} values.
      *
-     * @param taskId ID of the task to edit or null for a new task
-     * @param tasksRepository a repository of data for tasks
-     * @param addTaskView the add/edit view
-     * @param shouldLoadDataFromRepo whether data needs to be loaded or not (for config changes)
+     * @param taskId the task ID or null if it's a new task
+     * @param tasksRepository the data source
+     * @param shouldLoadDataFromRepo a flag that controls whether we should load data from the
+     *                               repository or not. It's lazy because it's determined in the
+     *                               Activity's onCreate.
      */
-    public AddEditTaskPresenter(@Nullable String taskId, @NonNull TasksDataSource tasksRepository,
-            @NonNull AddEditTaskContract.View addTaskView, boolean shouldLoadDataFromRepo) {
+    @Inject
+    AddEditTaskPresenter(@Nullable String taskId, @NonNull TasksRepository tasksRepository,
+                         Lazy<Boolean> shouldLoadDataFromRepo) {
         mTaskId = taskId;
-        mTasksRepository = checkNotNull(tasksRepository);
-        mAddTaskView = checkNotNull(addTaskView);
-        mIsDataMissing = shouldLoadDataFromRepo;
-        // 初始化presenter的时候,同时
-        Log.i(AddEditTaskActivity.TAG, "初始化presenter的时候,同时设置view的presenter");
-        mAddTaskView.setPresenter(this);
-    }
-
-    @Override
-    public void start() {
-        Log.i(AddEditTaskActivity.TAG, "presenter start...");
-        if (!isNewTask() && mIsDataMissing) {
-            populateTask();
-        }
+        mTasksRepository = tasksRepository;
+        mIsDataMissingLazy = shouldLoadDataFromRepo;
     }
 
     @Override
@@ -89,10 +95,23 @@ public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
     }
 
     @Override
+    public void takeView(AddEditTaskContract.View view) {
+        mAddTaskView = view;
+        mIsDataMissing = mIsDataMissingLazy.get();
+        if (!isNewTask() && mIsDataMissing) {
+            populateTask();
+        }
+    }
+
+    @Override
+    public void dropView() {
+        mAddTaskView = null;
+    }
+
+    @Override
     public void onTaskLoaded(Task task) {
-        Log.i(AddEditTaskActivity.TAG, "onTaskLoaded");
         // The view may not be able to handle UI updates anymore
-        if (mAddTaskView.isActive()) {
+        if (mAddTaskView != null && mAddTaskView.isActive()) {
             mAddTaskView.setTitle(task.getTitle());
             mAddTaskView.setDescription(task.getDescription());
         }
@@ -101,9 +120,8 @@ public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
 
     @Override
     public void onDataNotAvailable() {
-        Log.i(AddEditTaskActivity.TAG, "onDataNotAvailable");
         // The view may not be able to handle UI updates anymore
-        if (mAddTaskView.isActive()) {
+        if (mAddTaskView != null && mAddTaskView.isActive()) {
             mAddTaskView.showEmptyTaskError();
         }
     }
@@ -120,10 +138,14 @@ public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
     private void createTask(String title, String description) {
         Task newTask = new Task(title, description);
         if (newTask.isEmpty()) {
-            mAddTaskView.showEmptyTaskError();
+            if (mAddTaskView != null) {
+                mAddTaskView.showEmptyTaskError();
+            }
         } else {
             mTasksRepository.saveTask(newTask);
-            mAddTaskView.showTasksList();
+            if (mAddTaskView != null) {
+                mAddTaskView.showTasksList();
+            }
         }
     }
 
@@ -132,6 +154,8 @@ public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
             throw new RuntimeException("updateTask() was called but task is new.");
         }
         mTasksRepository.saveTask(new Task(title, description, mTaskId));
-        mAddTaskView.showTasksList(); // After an edit, go back to the list.
+        if (mAddTaskView != null) {
+            mAddTaskView.showTasksList(); // After an edit, go back to the list.
+        }
     }
 }

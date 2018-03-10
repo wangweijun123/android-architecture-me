@@ -24,48 +24,61 @@ import com.example.android.architecture.blueprints.todoapp.data.source.TasksData
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.google.common.base.Strings;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.inject.Inject;
 
 /**
  * Listens to user actions from the UI ({@link TaskDetailFragment}), retrieves the data and updates
  * the UI as required.
+ * <p>
+ * By marking the constructor with {@code @Inject}, Dagger injects the dependencies required to
+ * create an instance of the TaskDetailPresenter (if it fails, it emits a compiler error). It uses
+ * {@link TaskDetailPresenterModule} to do so.
+ * <p>
+ * Dagger generated code doesn't require public access to the constructor or class, and
+ * therefore, to ensure the developer doesn't instantiate the class manually and bypasses Dagger,
+ * it's good practice minimise the visibility of the class/constructor as much as possible.
  */
-public class TaskDetailPresenter implements TaskDetailContract.Presenter {
+final class TaskDetailPresenter implements TaskDetailContract.Presenter {
 
-    private final TasksRepository mTasksRepository;
+    private TasksRepository mTasksRepository;
+    @Nullable
+    private TaskDetailContract.View mTaskDetailView;
 
-    private final TaskDetailContract.View mTaskDetailView;
-
+    /**
+     * Dagger strictly enforces that arguments not marked with {@code @Nullable} are not injected
+     * with {@code @Nullable} values.
+     */
     @Nullable
     private String mTaskId;
 
-    public TaskDetailPresenter(@Nullable String taskId,
-                               @NonNull TasksRepository tasksRepository,
-                               @NonNull TaskDetailContract.View taskDetailView) {
+    /**
+     * Dagger strictly enforces that arguments not marked with {@code @Nullable} are not injected
+     * with {@code @Nullable} values.
+     */
+    @Inject
+    TaskDetailPresenter(@Nullable String taskId,
+                        TasksRepository tasksRepository) {
+        mTasksRepository = tasksRepository;
         mTaskId = taskId;
-        mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null!");
-        mTaskDetailView = checkNotNull(taskDetailView, "taskDetailView cannot be null!");
-
-        mTaskDetailView.setPresenter(this);
     }
 
-    @Override
-    public void start() {
-        openTask();
-    }
 
     private void openTask() {
         if (Strings.isNullOrEmpty(mTaskId)) {
-            mTaskDetailView.showMissingTask();
+            if (mTaskDetailView != null) {
+                mTaskDetailView.showMissingTask();
+            }
             return;
         }
 
-        mTaskDetailView.setLoadingIndicator(true);
+        if (mTaskDetailView != null) {
+            mTaskDetailView.setLoadingIndicator(true);
+        }
         mTasksRepository.getTask(mTaskId, new TasksDataSource.GetTaskCallback() {
             @Override
             public void onTaskLoaded(Task task) {
                 // The view may not be able to handle UI updates anymore
-                if (!mTaskDetailView.isActive()) {
+                if (mTaskDetailView==null||!mTaskDetailView.isActive()) {
                     return;
                 }
                 mTaskDetailView.setLoadingIndicator(false);
@@ -90,40 +103,67 @@ public class TaskDetailPresenter implements TaskDetailContract.Presenter {
     @Override
     public void editTask() {
         if (Strings.isNullOrEmpty(mTaskId)) {
-            mTaskDetailView.showMissingTask();
+            if (mTaskDetailView != null) {
+                mTaskDetailView.showMissingTask();
+            }
             return;
         }
-        mTaskDetailView.showEditTask(mTaskId);
+        if (mTaskDetailView != null) {
+            mTaskDetailView.showEditTask(mTaskId);
+        }
     }
 
     @Override
     public void deleteTask() {
         if (Strings.isNullOrEmpty(mTaskId)) {
-            mTaskDetailView.showMissingTask();
+            if (mTaskDetailView != null) {
+                mTaskDetailView.showMissingTask();
+            }
             return;
         }
         mTasksRepository.deleteTask(mTaskId);
-        mTaskDetailView.showTaskDeleted();
+        if (mTaskDetailView != null) {
+            mTaskDetailView.showTaskDeleted();
+        }
     }
 
     @Override
     public void completeTask() {
         if (Strings.isNullOrEmpty(mTaskId)) {
-            mTaskDetailView.showMissingTask();
+            if (mTaskDetailView != null) {
+                mTaskDetailView.showMissingTask();
+            }
             return;
         }
         mTasksRepository.completeTask(mTaskId);
-        mTaskDetailView.showTaskMarkedComplete();
+        if (mTaskDetailView != null) {
+            mTaskDetailView.showTaskMarkedComplete();
+        }
     }
 
     @Override
     public void activateTask() {
         if (Strings.isNullOrEmpty(mTaskId)) {
-            mTaskDetailView.showMissingTask();
+            if (mTaskDetailView != null) {
+                mTaskDetailView.showMissingTask();
+            }
             return;
         }
         mTasksRepository.activateTask(mTaskId);
-        mTaskDetailView.showTaskMarkedActive();
+        if (mTaskDetailView != null) {
+            mTaskDetailView.showTaskMarkedActive();
+        }
+    }
+
+    @Override
+    public void takeView(TaskDetailContract.View taskDetailView) {
+        mTaskDetailView = taskDetailView;
+        openTask();
+    }
+
+    @Override
+    public void dropView() {
+        mTaskDetailView = null;
     }
 
     private void showTask(@NonNull Task task) {
@@ -131,16 +171,26 @@ public class TaskDetailPresenter implements TaskDetailContract.Presenter {
         String description = task.getDescription();
 
         if (Strings.isNullOrEmpty(title)) {
-            mTaskDetailView.hideTitle();
+            if (mTaskDetailView != null) {
+                mTaskDetailView.hideTitle();
+            }
         } else {
-            mTaskDetailView.showTitle(title);
+            if (mTaskDetailView != null) {
+                mTaskDetailView.showTitle(title);
+            }
         }
 
         if (Strings.isNullOrEmpty(description)) {
-            mTaskDetailView.hideDescription();
+            if (mTaskDetailView != null) {
+                mTaskDetailView.hideDescription();
+            }
         } else {
-            mTaskDetailView.showDescription(description);
+            if (mTaskDetailView != null) {
+                mTaskDetailView.showDescription(description);
+            }
         }
-        mTaskDetailView.showCompletionStatus(task.isCompleted());
+        if (mTaskDetailView != null) {
+            mTaskDetailView.showCompletionStatus(task.isCompleted());
+        }
     }
 }

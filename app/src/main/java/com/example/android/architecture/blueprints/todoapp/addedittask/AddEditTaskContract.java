@@ -21,13 +21,9 @@ import com.example.android.architecture.blueprints.todoapp.BaseView;
 
 /**
  * This specifies the contract between the view and the presenter.
- * view接口与presenter接口放在同一个类中,一目了然
  */
 public interface AddEditTaskContract {
 
-    /**
-     * view 中的显示接口(数据显示的操作)
-     */
     interface View extends BaseView<Presenter> {
 
         void showEmptyTaskError();
@@ -41,10 +37,7 @@ public interface AddEditTaskContract {
         boolean isActive();
     }
 
-    /**
-     * presenter 层的业务操作接口
-     */
-    interface Presenter extends BasePresenter {
+    interface Presenter extends BasePresenter<View> {
 
         void saveTask(String title, String description);
 

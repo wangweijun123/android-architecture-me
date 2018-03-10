@@ -16,10 +16,7 @@
 
 package com.example.android.architecture.blueprints.todoapp.data.source.local;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
@@ -27,35 +24,26 @@ import com.example.android.architecture.blueprints.todoapp.util.AppExecutors;
 
 import java.util.List;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
 
 /**
  * Concrete implementation of a data source as a db.
  */
+@Singleton
 public class TasksLocalDataSource implements TasksDataSource {
 
-    private static volatile TasksLocalDataSource INSTANCE;
+    private final TasksDao mTasksDao;
 
-    private TasksDao mTasksDao;
+    private final AppExecutors mAppExecutors;
 
-    private AppExecutors mAppExecutors;
-
-    // Prevent direct instantiation.
-    private TasksLocalDataSource(@NonNull AppExecutors appExecutors,
-            @NonNull TasksDao tasksDao) {
-        mAppExecutors = appExecutors;
+    @Inject
+    public TasksLocalDataSource(@NonNull AppExecutors executors, @NonNull TasksDao tasksDao) {
         mTasksDao = tasksDao;
-    }
-
-    public static TasksLocalDataSource getInstance(@NonNull AppExecutors appExecutors,
-            @NonNull TasksDao tasksDao) {
-        if (INSTANCE == null) {
-            synchronized (TasksLocalDataSource.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new TasksLocalDataSource(appExecutors, tasksDao);
-                }
-            }
-        }
-        return INSTANCE;
+        mAppExecutors = executors;
     }
 
     /**
@@ -200,10 +188,5 @@ public class TasksLocalDataSource implements TasksDataSource {
         };
 
         mAppExecutors.diskIO().execute(deleteRunnable);
-    }
-
-    @VisibleForTesting
-    static void clearInstance() {
-        INSTANCE = null;
     }
 }

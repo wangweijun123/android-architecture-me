@@ -18,31 +18,40 @@ package com.example.android.architecture.blueprints.todoapp.addedittask;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.annotation.VisibleForTesting;
-import android.support.test.espresso.IdlingResource;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 
-import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
 import com.example.android.architecture.blueprints.todoapp.util.ActivityUtils;
-import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
+
+import javax.inject.Inject;
+
+import dagger.android.support.DaggerAppCompatActivity;
 
 /**
  * Displays an add or edit task screen.
  */
-public class AddEditTaskActivity extends AppCompatActivity {
-    public static final String TAG = "mvp";
+public class AddEditTaskActivity extends DaggerAppCompatActivity {
 
     public static final int REQUEST_ADD_TASK = 1;
 
     public static final String SHOULD_LOAD_DATA_FROM_REPO_KEY = "SHOULD_LOAD_DATA_FROM_REPO_KEY";
 
-    private AddEditTaskPresenter mAddEditTaskPresenter;
+    @Inject
+    AddEditTaskContract.Presenter mAddEditTasksPresenter;
+    
+    @Inject
+    AddEditTaskFragment mFragment;
+
+    @Inject
+    @Nullable
+    String mTaskId;
 
     private ActionBar mActionBar;
+
+    // In a rotation it's important to know if we want to let the framework restore view state or
+    // need to load data from the repository. This is saved into the state bundle.
+    private boolean mIsDataMissing = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,48 +59,31 @@ public class AddEditTaskActivity extends AppCompatActivity {
         setContentView(R.layout.addtask_act);
 
         // Set up the toolbar.
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         mActionBar = getSupportActionBar();
         mActionBar.setDisplayHomeAsUpEnabled(true);
         mActionBar.setDisplayShowHomeEnabled(true);
+        setToolbarTitle(mTaskId);
 
-        AddEditTaskFragment addEditTaskFragment = (AddEditTaskFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.contentFrame);
-
-        String taskId = getIntent().getStringExtra(AddEditTaskFragment.ARGUMENT_EDIT_TASK_ID);
-
-        setToolbarTitle(taskId);
+        AddEditTaskFragment addEditTaskFragment =
+                (AddEditTaskFragment) getSupportFragmentManager().findFragmentById(R.id.contentFrame);
 
         if (addEditTaskFragment == null) {
-            Log.i(TAG, "AddEditTaskFragment  newInstance");
-            addEditTaskFragment = AddEditTaskFragment.newInstance();
-
-            if (getIntent().hasExtra(AddEditTaskFragment.ARGUMENT_EDIT_TASK_ID)) {
-                Bundle bundle = new Bundle();
-                bundle.putString(AddEditTaskFragment.ARGUMENT_EDIT_TASK_ID, taskId);
-                addEditTaskFragment.setArguments(bundle);
-            }
+            addEditTaskFragment = mFragment;
 
             ActivityUtils.addFragmentToActivity(getSupportFragmentManager(),
                     addEditTaskFragment, R.id.contentFrame);
         }
+        restoreState(savedInstanceState);
+    }
 
-        boolean shouldLoadDataFromRepo = true;
-
+    private void restoreState(Bundle savedInstanceState) {
         // Prevent the presenter from loading data from the repository if this is a config change.
         if (savedInstanceState != null) {
             // Data might not have loaded when the config change happen, so we saved the state.
-            shouldLoadDataFromRepo = savedInstanceState.getBoolean(SHOULD_LOAD_DATA_FROM_REPO_KEY);
+            mIsDataMissing = savedInstanceState.getBoolean(SHOULD_LOAD_DATA_FROM_REPO_KEY);
         }
-
-        // Create the presenter(view 和 model, 同时给view设置了presenter)
-        Log.i(TAG, "AddEditTaskPresenter  newInstance");
-        mAddEditTaskPresenter = new AddEditTaskPresenter(
-                taskId,
-                Injection.provideTasksRepository(getApplicationContext()),
-                addEditTaskFragment,
-                shouldLoadDataFromRepo);
     }
 
     private void setToolbarTitle(@Nullable String taskId) {
@@ -105,7 +97,7 @@ public class AddEditTaskActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         // Save the state so that next time we know if we need to refresh data.
-        outState.putBoolean(SHOULD_LOAD_DATA_FROM_REPO_KEY, mAddEditTaskPresenter.isDataMissing());
+        outState.putBoolean(SHOULD_LOAD_DATA_FROM_REPO_KEY, mAddEditTasksPresenter.isDataMissing());
         super.onSaveInstanceState(outState);
     }
 
@@ -115,8 +107,7 @@ public class AddEditTaskActivity extends AppCompatActivity {
         return true;
     }
 
-    @VisibleForTesting
-    public IdlingResource getCountingIdlingResource() {
-        return EspressoIdlingResource.getIdlingResource();
+    boolean isDataMissing() {
+        return mIsDataMissing;
     }
 }

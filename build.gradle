@@ -50,4 +50,5 @@ ext {
     rulesVersion = '1.0.1'
     espressoVersion = '2.2.2'
     roomVersion = "1.0.0"
+    daggerVersion = '2.11'
 }
