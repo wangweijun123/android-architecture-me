@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package com.example.android.architecture.blueprints.todoapp;
+package com.example.android.architecture.blueprints.todoapp.tasks;
 
-public interface BasePresenter {
+/**
+ * Defines the navigation actions that can be called from the task list screen.
+ */
+public interface TasksNavigator {
 
-    void start();
-
+    void addNewTask();
 }

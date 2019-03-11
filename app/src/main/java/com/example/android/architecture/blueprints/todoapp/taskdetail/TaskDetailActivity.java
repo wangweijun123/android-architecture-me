@@ -16,22 +16,37 @@
 
 package com.example.android.architecture.blueprints.todoapp.taskdetail;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
 import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
+import com.example.android.architecture.blueprints.todoapp.ViewModelFactory;
+import com.example.android.architecture.blueprints.todoapp.addedittask.AddEditTaskActivity;
+import com.example.android.architecture.blueprints.todoapp.addedittask.AddEditTaskFragment;
 import com.example.android.architecture.blueprints.todoapp.util.ActivityUtils;
+
+import static com.example.android.architecture.blueprints.todoapp.taskdetail.TaskDetailFragment.REQUEST_EDIT_TASK;
 
 /**
  * Displays task details screen.
  */
-public class TaskDetailActivity extends AppCompatActivity {
+public class TaskDetailActivity extends AppCompatActivity implements TaskDetailNavigator {
 
     public static final String EXTRA_TASK_ID = "TASK_ID";
+    public static final int DELETE_RESULT_OK = RESULT_FIRST_USER + 2;
 
+    public static final int EDIT_RESULT_OK = RESULT_FIRST_USER + 3;
+
+    private TaskDetailViewModel mTaskViewModel;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,12 +72,10 @@ public class TaskDetailActivity extends AppCompatActivity {
             ActivityUtils.addFragmentToActivity(getSupportFragmentManager(),
                     taskDetailFragment, R.id.contentFrame);
         }
+        mTaskViewModel = obtainViewModel(this);
 
-        // Create the presenter
-        new TaskDetailPresenter(
-                taskId,
-                Injection.provideTasksRepository(getApplicationContext()),
-                taskDetailFragment);
+        subscribeToNavigationChanges(mTaskViewModel);
+
     }
 
     @Override
@@ -70,4 +83,45 @@ public class TaskDetailActivity extends AppCompatActivity {
         onBackPressed();
         return true;
     }
+
+    private void subscribeToNavigationChanges(TaskDetailViewModel viewModel) {
+        // The activity observes the navigation commands in the ViewModel
+        viewModel.getEditTaskCommand().observe(this, new Observer<Void>() {
+            @Override
+            public void onChanged(@Nullable Void _) {
+                TaskDetailActivity.this.onStartEditTask();
+            }
+        });
+        viewModel.getDeleteTaskCommand().observe(this, new Observer<Void>() {
+            @Override
+            public void onChanged(@Nullable Void _) {
+                TaskDetailActivity.this.onTaskDeleted();
+            }
+        });
+    }
+
+    @NonNull
+    public static TaskDetailViewModel obtainViewModel(FragmentActivity activity) {
+        // Use a Factory to inject dependencies into the ViewModel
+        ViewModelFactory factory = ViewModelFactory.getInstance(activity.getApplication());
+
+        return ViewModelProviders.of(activity, factory).get(TaskDetailViewModel.class);
+    }
+
+
+    @Override
+    public void onTaskDeleted() {
+        setResult(DELETE_RESULT_OK);
+        // If the task was deleted successfully, go back to the list.
+        finish();
+    }
+
+    @Override
+    public void onStartEditTask() {
+        String taskId = getIntent().getStringExtra(EXTRA_TASK_ID);
+        Intent intent = new Intent(this, AddEditTaskActivity.class);
+        intent.putExtra(AddEditTaskFragment.ARGUMENT_EDIT_TASK_ID, taskId);
+        startActivityForResult(intent, REQUEST_EDIT_TASK);
+    }
+
 }

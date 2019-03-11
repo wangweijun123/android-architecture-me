@@ -16,10 +16,13 @@
 
 package com.example.android.architecture.blueprints.todoapp.addedittask;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.support.test.espresso.IdlingResource;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -27,20 +30,21 @@ import android.util.Log;
 
 import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
+import com.example.android.architecture.blueprints.todoapp.ViewModelFactory;
 import com.example.android.architecture.blueprints.todoapp.util.ActivityUtils;
 import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
 
 /**
  * Displays an add or edit task screen.
  */
-public class AddEditTaskActivity extends AppCompatActivity {
+public class AddEditTaskActivity extends AppCompatActivity implements AddEditTaskNavigator{
     public static final String TAG = "mvp";
+    public static final int REQUEST_CODE = 1;
 
+    public static final int ADD_EDIT_RESULT_OK = RESULT_FIRST_USER + 1;
     public static final int REQUEST_ADD_TASK = 1;
 
     public static final String SHOULD_LOAD_DATA_FROM_REPO_KEY = "SHOULD_LOAD_DATA_FROM_REPO_KEY";
-
-    private AddEditTaskPresenter mAddEditTaskPresenter;
 
     private ActionBar mActionBar;
 
@@ -85,13 +89,23 @@ public class AddEditTaskActivity extends AppCompatActivity {
             shouldLoadDataFromRepo = savedInstanceState.getBoolean(SHOULD_LOAD_DATA_FROM_REPO_KEY);
         }
 
-        // Create the presenter(view 和 model, 同时给view设置了presenter)
-        Log.i(TAG, "AddEditTaskPresenter  newInstance");
-        mAddEditTaskPresenter = new AddEditTaskPresenter(
-                taskId,
-                Injection.provideTasksRepository(getApplicationContext()),
-                addEditTaskFragment,
-                shouldLoadDataFromRepo);
+        subscribeToNavigationChanges();
+    }
+    private void subscribeToNavigationChanges() {
+        AddEditTaskViewModel viewModel = obtainViewModel(this);
+
+        // The activity observes the navigation events in the ViewModel
+        viewModel.getTaskUpdatedEvent().observe(this, new Observer<Void>() {
+            @Override
+            public void onChanged(@Nullable Void _) {
+                AddEditTaskActivity.this.onTaskSaved();
+            }
+        });
+    }
+    @Override
+    public void onTaskSaved() {
+        setResult(ADD_EDIT_RESULT_OK);
+        finish();
     }
 
     private void setToolbarTitle(@Nullable String taskId) {
@@ -103,13 +117,6 @@ public class AddEditTaskActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        // Save the state so that next time we know if we need to refresh data.
-        outState.putBoolean(SHOULD_LOAD_DATA_FROM_REPO_KEY, mAddEditTaskPresenter.isDataMissing());
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
@@ -118,5 +125,12 @@ public class AddEditTaskActivity extends AppCompatActivity {
     @VisibleForTesting
     public IdlingResource getCountingIdlingResource() {
         return EspressoIdlingResource.getIdlingResource();
+    }
+
+    public static AddEditTaskViewModel obtainViewModel(FragmentActivity activity) {
+        // Use a Factory to inject dependencies into the ViewModel
+        ViewModelFactory factory = ViewModelFactory.getInstance(activity.getApplication());
+
+        return ViewModelProviders.of(activity, factory).get(AddEditTaskViewModel.class);
     }
 }
