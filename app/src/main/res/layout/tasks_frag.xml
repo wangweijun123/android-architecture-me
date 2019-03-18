@@ -30,8 +30,7 @@
 <com.example.android.architecture.blueprints.todoapp.tasks.ScrollChildSwipeRefreshLayout
     android:id="@+id/refresh_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    app:refreshing="@{viewmodel.dataLoading}">
+    android:layout_height="match_parent">
 
     <RelativeLayout
         android:id="@+id/tasksContainer"
@@ -59,9 +58,9 @@
 
             <ListView
                 android:id="@+id/tasks_list"
+                app:items="@{viewmodel.items}"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:items="@{viewmodel.items}"/>
+                android:layout_height="wrap_content"/>
         </LinearLayout>
 
         <LinearLayout

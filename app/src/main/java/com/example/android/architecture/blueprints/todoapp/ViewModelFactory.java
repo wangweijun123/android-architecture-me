@@ -20,11 +20,11 @@ import android.annotation.SuppressLint;
 import android.app.Application;
 import android.arch.lifecycle.ViewModel;
 import android.arch.lifecycle.ViewModelProvider;
+import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.example.android.architecture.blueprints.todoapp.addedittask.AddEditTaskViewModel;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
-import com.example.android.architecture.blueprints.todoapp.taskdetail.TaskDetailViewModel;
 import com.example.android.architecture.blueprints.todoapp.tasks.TasksViewModel;
 
 /**
@@ -34,16 +34,16 @@ import com.example.android.architecture.blueprints.todoapp.tasks.TasksViewModel;
  * actually necessary in this case, as the product ID can be passed in a public method.
  */
 public class ViewModelFactory extends ViewModelProvider.NewInstanceFactory {
-
-    @SuppressLint("StaticFieldLeak")
     private static volatile ViewModelFactory INSTANCE;
-
     private final Application mApplication;
 
     private final TasksRepository mTasksRepository;
+    private ViewModelFactory(Application application, TasksRepository tasksRepository) {
+        mApplication = application;
+        mTasksRepository = tasksRepository;
+    }
 
-    public static ViewModelFactory getInstance(Application application) {
-
+    public static ViewModelFactory getInstance(Application application){
         if (INSTANCE == null) {
             synchronized (ViewModelFactory.class) {
                 if (INSTANCE == null) {
@@ -55,31 +55,13 @@ public class ViewModelFactory extends ViewModelProvider.NewInstanceFactory {
         return INSTANCE;
     }
 
-    @VisibleForTesting
-    public static void destroyInstance() {
-        INSTANCE = null;
-    }
-
-    private ViewModelFactory(Application application, TasksRepository repository) {
-        mApplication = application;
-        mTasksRepository = repository;
-    }
-
+    @NonNull
     @Override
-    public <T extends ViewModel> T create(Class<T> modelClass) {
-        /*if (modelClass.isAssignableFrom(StatisticsViewModel.class)) {
-            //noinspection unchecked
-            return (T) new StatisticsViewModel(mApplication, mTasksRepository);
-        } else */if (modelClass.isAssignableFrom(TaskDetailViewModel.class)) {
-            //noinspection unchecked
-            return (T) new TaskDetailViewModel(mApplication, mTasksRepository);
-        } else if (modelClass.isAssignableFrom(AddEditTaskViewModel.class)) {
-            //noinspection unchecked
-            return (T) new AddEditTaskViewModel(mApplication, mTasksRepository);
-        } else if (modelClass.isAssignableFrom(TasksViewModel.class)) {
+    public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
+        if (modelClass.isAssignableFrom(TasksViewModel.class)) {
             //noinspection unchecked
             return (T) new TasksViewModel(mApplication, mTasksRepository);
         }
-        throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass.getName());
+        throw new IllegalArgumentException("Unknown ViewModel class:"+modelClass.getName());
     }
 }

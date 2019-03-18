@@ -25,6 +25,7 @@ import java.util.List;
 
 /**
  * Contains {@link BindingAdapter}s for the {@link Task} list.
+ * 生成的binding类自动调用
  */
 public class TasksListBindings {
 
