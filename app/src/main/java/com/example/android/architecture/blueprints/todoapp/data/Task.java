@@ -26,13 +26,14 @@ import android.support.annotation.Nullable;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 /**
  * Immutable model class for a Task.
  */
 @Entity(tableName = "tasks")
-public final class Task {
+public final class Task implements Serializable {
 
     @PrimaryKey
     @NonNull

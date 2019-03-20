@@ -17,6 +17,7 @@
 package com.example.android.architecture.blueprints.todoapp.tasks;
 
 import android.databinding.BindingAdapter;
+import android.graphics.drawable.Drawable;
 import android.widget.ListView;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
@@ -30,12 +31,14 @@ import java.util.List;
 public class TasksListBindings {
 
     @SuppressWarnings("unchecked")
-    @BindingAdapter("app:items")
-    public static void setItems(ListView listView, List<Task> items) {
+//    @BindingAdapter("app:items")
+    @BindingAdapter(value = {"app:items", "app:divider"}, requireAll = false)
+    public static void setItems(ListView listView, List<Task> items, Drawable divider) {
         TasksAdapter adapter = (TasksAdapter) listView.getAdapter();
         if (adapter != null)
         {
             adapter.replaceData(items);
         }
+        listView.setDivider(divider);
     }
 }

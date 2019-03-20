@@ -38,6 +38,7 @@ import android.view.MenuItem;
 
 import com.example.android.architecture.blueprints.todoapp.R;
 import com.example.android.architecture.blueprints.todoapp.ViewModelFactory;
+import com.example.android.architecture.blueprints.todoapp.taskdetail.TaskDetailActivity;
 import com.example.android.architecture.blueprints.todoapp.util.ActivityUtils;
 import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
 
@@ -82,9 +83,9 @@ public class TasksActivity extends AppCompatActivity{
 
     public void openTaskDetails(String taskId) {
         Log.i("wangweijun", " openTaskDetails  : "+taskId);
-//        Intent intent = new Intent(this, TaskDetailActivity.class);
-//        intent.putExtra(TaskDetailActivity.EXTRA_TASK_ID, taskId);
-//        startActivityForResult(intent, AddEditTaskActivity.REQUEST_CODE);
+        Intent intent = new Intent(this, TaskDetailActivity.class);
+        intent.putExtra(TaskDetailActivity.EXTRA_TASK_ID, taskId);
+        startActivityForResult(intent, 1000);
 
     }
 }

@@ -6,10 +6,13 @@ import android.arch.lifecycle.MutableLiveData;
 import android.content.Context;
 import android.databinding.ObservableArrayList;
 import android.databinding.ObservableBoolean;
+import android.databinding.ObservableField;
 import android.databinding.ObservableList;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.example.android.architecture.blueprints.todoapp.R;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
@@ -20,6 +23,8 @@ public class TasksViewModel extends AndroidViewModel {
     // These observable fields will update Views automatically
     public final ObservableList<Task> items = new ObservableArrayList<>();
     public final ObservableBoolean empty = new ObservableBoolean(true);
+
+    public final ObservableField<Drawable> divider = new ObservableField<>();
 
     //
     public final MutableLiveData<String> mOpenTaskEvent = new MutableLiveData();
@@ -43,6 +48,7 @@ public class TasksViewModel extends AndroidViewModel {
                 items.clear();
                 items.addAll(tasks);
                 empty.set(items.isEmpty());
+                divider.set(mContext.getDrawable(R.drawable.ic_add));
             }
 
             @Override

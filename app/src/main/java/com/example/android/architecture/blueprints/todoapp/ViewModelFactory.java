@@ -24,7 +24,9 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.example.android.architecture.blueprints.todoapp.addedittask.AddEditTaskViewModel;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
+import com.example.android.architecture.blueprints.todoapp.taskdetail.TaskDetailViewModel;
 import com.example.android.architecture.blueprints.todoapp.tasks.TasksViewModel;
 
 /**
@@ -61,6 +63,12 @@ public class ViewModelFactory extends ViewModelProvider.NewInstanceFactory {
         if (modelClass.isAssignableFrom(TasksViewModel.class)) {
             //noinspection unchecked
             return (T) new TasksViewModel(mApplication, mTasksRepository);
+        } else if (modelClass.isAssignableFrom(TaskDetailViewModel.class)) {
+            //noinspection unchecked
+            return (T) new TaskDetailViewModel(mApplication, mTasksRepository);
+        }else if (modelClass.isAssignableFrom(AddEditTaskViewModel.class)) {
+            //noinspection unchecked
+            return (T) new AddEditTaskViewModel(mApplication, mTasksRepository);
         }
         throw new IllegalArgumentException("Unknown ViewModel class:"+modelClass.getName());
     }
