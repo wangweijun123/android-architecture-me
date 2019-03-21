@@ -21,6 +21,7 @@ import android.graphics.drawable.Drawable;
 import android.widget.ListView;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
+import com.example.android.architecture.blueprints.todoapp.mytasks.MyTasksAdapter;
 
 import java.util.List;
 
@@ -40,5 +41,19 @@ public class TasksListBindings {
             adapter.replaceData(items);
         }
         listView.setDivider(divider);
+    }
+
+
+
+    @SuppressWarnings("unchecked")
+//    @BindingAdapter(value = {"xxxx:tasks"}, requireAll = false) //可以不用前缀,然后只有属性要么在xml，
+    // 要么bindingAdapter
+    @BindingAdapter(value = {"tasks"}, requireAll = false)
+    public static void setTasks(ListView listView, List<Task> items) {
+        MyTasksAdapter adapter = (MyTasksAdapter) listView.getAdapter();
+        if (adapter != null)
+        {
+            adapter.replace(items);
+        }
     }
 }
